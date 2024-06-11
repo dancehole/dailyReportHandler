@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 # 0.1.0 更新：完成安装包流程
 # 0.1.1 更新：测试命令行调用
-# 0.1.2 更新：可以正确解析命令行参数
+# 0.1.2 更新：可以正确解析命令行参数+过整体流程
 
 setup(
     name='dailyReportHandler',  # 包名

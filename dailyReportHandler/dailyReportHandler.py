@@ -6,6 +6,8 @@ import os
 from jinja2 import Environment, FileSystemLoader
 from requests import head
 
+from utils import Utils
+
 # 日报类，主要处理日报+周报处理【逻辑核心】
 class DailyReportHandler:
     def __init__(self, cmd, *args, **kwargs) -> None:
