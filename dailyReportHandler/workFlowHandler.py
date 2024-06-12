@@ -1,3 +1,10 @@
+"""已弃用
+
+Returns:
+    _type_: _description_
+"""
+
+
 # 工作流处理类，包含日报处理，目录处理
 class WorkFlowHandler:
     def __init__(self, args):
