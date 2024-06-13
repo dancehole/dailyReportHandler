@@ -6,7 +6,9 @@ import os
 from jinja2 import Environment, FileSystemLoader
 from requests import head
 
-from utils import Utils
+# 导入本地包
+from utils import DateHandler, Utils
+from template import Template
 
 # 日报类，主要处理日报+周报处理【逻辑核心】
 class DailyReportHandler:
@@ -31,35 +33,25 @@ class DailyReportHandler:
         # self.arg_action = cmd.action
         self.arg_date = cmd.date
         self.arg_path = cmd.path
+        self.arg_action = cmd.action
+        self.arg_message = cmd.message
         # 其他参数：暂未确定
 
-    # 创建缺省的config,传入配置文件路径
-    def create_default_config(self,config_file):
-        config = Template.config_json
-        # 稍微初始化一下子
-        format_date = self.arg_date.strftime("%m-%d")
-        config["global"]["create_at"] = format_date
-        config["global"]["last_modify"] = format_date
-        config["global"]["work_day"] = 1
-        config["global"]["work_week"] = 1
-        config["detail"][0]["date"] = [format_date]
-        config["detail"][0]["detail"][0]["date"] = format_date
-        config["detail"][0]["detail"][0]["work_day"]=1
-        config["detail"][0]["detail"][0]["work_week"]=1
-        
-        Utils.write_json(config, config_file)
-        return config
-
-    # 解析config参数(如果为空，则要创建)
+    # 解析config参数(如果为空，则要创建default_config)
     def parse_config(self):
         config_file = os.path.join(self.path["root"], "config.json")
         if not os.path.exists(config_file):
             print("json文件不存在,正在创建ing")
-            self.config = self.create_default_config(config_file)
+            self.config = Template.create_default_config(self.arg_date)
         else:
+            print("检测到json文件，正在读取")
             self.config = Utils.read_json(config_file)
             if self.config == None: # 检查config格式，todo
                 pass
+            
+        # print("读取到基本信息：\n",str(self.config["global"]))
+        
+        
     # 以传入的路径[arg.path 一般是命令调用的路径]为根路径，动态寻找父目录是否存在，没有则提示创建【算法知识】
     def __init_path(self):
         print("当前目录为" + self.arg_path)
@@ -102,55 +94,18 @@ class DailyReportHandler:
         }
         pass
     
-    # get_monday_of_date 获取当前日期是星期几
-    def get_monday(self,date):
-        days_to_monday = (date.weekday()) % 7
-        return date - timedelta(days=days_to_monday)
 
-    def get_week_offset_by_config(self):
-        # 获取当前日期是星期几
-        weekday = self.arg_date.weekday()
-        # 获取当前日期是第几周
-        week_offset = (self.arg_date.day - 1) // 7 + 1
-        return week_offset
-    
-    # 根据arg.date结合config文件，获取当前“周数+周开始日”【同时结合计算和config文件】周的计算从入职开始
-    # 优点：不上班也会计算日子和周数。缺点有时候放国庆/五一，一周可能就一天日报，，
-    def get_week_offset(self):
-        # 处理第一天+所在周的计算[可以计算入职天数&整周数]
-        first_day = self.config["global"]["create_at"]
-        # mm-dd转datetime
-        first_date = datetime.strptime(f'2024-{first_day}', '%Y-%m-%d')
-        first_date_offset = first_date.weekday()+1
-        
-        first_monday = self.get_monday(first_date)
-        curr_monday  = self.get_monday(self.arg_date)
-        
-        print("入职日期",first_date)
-        print("入职是星期",first_date_offset)
-        print("入职当周开始时间是",first_monday)
 
-        
-        print("现在是",self.arg_date.strftime("%m-%d"))
-        print("现在是星期",self.arg_date.weekday()+1)
-        print("这周开始时间是",curr_monday)
-        
-        offset_days  = (self.arg_date - first_date).days+1
-        offset_weeks = offset_days // 7 +1
-        
-        print("入职",offset_days,"天，入职第",offset_weeks,"周")
+    """get_weekly_dir_name 获取周报文件夹名称
+    description:周报文件夹由”当周日期-当前周数“组成，如
+        # 检查传入的日期是否创建了相应的目录（weekx）
+        # 如传入04-26,要检查其在04-24-week1目录下
+    Returns:
+        _type_: _description_
+    """
 
-        return {
-            "offset_days":offset_days,
-            "offset_weeks":offset_weeks,
-            "curr_monday":curr_monday.strftime("%m-%d"),
-            "first_monday":first_monday
-        }
-
-    # 检查传入的日期是否创建了相应的目录（weekx）
-    # 如传入04-26,要检查其在04-24-week1目录下
     def get_weekly_dir_name(self):
-        offset = self.get_week_offset()
+        offset = DateHandler.get_date_offsets(self.config,self.arg_date)
         
         week_file_name = offset["curr_monday"]+"-week"+str(offset["offset_weeks"])
         print("正在检查所在周目录：",week_file_name)
@@ -182,9 +137,10 @@ class DailyReportHandler:
     # 更新config.json：当且仅当创建日报时，更新config.json
     def update_config(self):
         self.config["global"]["work_day"] += 1
-        self.config["global"]["work_week"] = self.get_week_offset()["offset_weeks"]
+        self.config["global"]["work_week"] = DateHandler.get_date_offsets(self.config,self.arg_date)["offset_weeks"]
+        __offset = self.config["global"]["work_week"]
         # 插入当日数据
-        self.config["detail"][self.config["global"]["work_week"]-1]["date"].append(self.arg_date.strftime("%m-%d"))
+        self.config["detail"][__offset-1]["date"].append(self.arg_date.strftime("%m-%d"))
         temp ={
           "date": "06-03",
           "work_day": 1,
@@ -199,33 +155,49 @@ class DailyReportHandler:
         
         
     # 填充周报的模板数据，模板参考readme:weekly_test_data{date,content,class,ip}
-    # 待完成
     def get_weekly_report_data(self):
-        return
-        week = self.get_week_offset()["offset_weeks"]
-        date_list = self.config["detail"][week]["date"]
-        content_list = [self.config["detail"][week]["detail"][i]["work_brief"] for i in range(len(date_list))]
-        class_list = [self.config["detail"][week]["detail"][i]["class"] for i in range(len(date_list))]
-        ip_list = [f"{self.ip}{date}" for date in date_list]
+        __template = Template.weekly_template_vars
+        __offset = DateHandler.get_date_offsets(self.config,self.arg_date)
+        __dir_name = str(__offset["curr_monday"])+'-week'+str(__offset["offset_weeks"])
         
-        print(date_list)
-        print(content_list)
-        print(ip_list)
+        __report_data = []
+        for index in self.config["detail"][__offset["offset_weeks"]-1]["date"]:
+            __report_data.append({
+                "date": index,
+                "content": "",
+                "class":"",
+                "link":"http://10.10.41.235:8001/dailyReport日报/"+__dir_name+"/"+index+"/"
+            })
+
+
+        __template.update({
+            "week": __offset["offset_weeks"],
+            "day": __offset["offset_days"],
+            "type": "周",
+            "ip": "http://10.10.41.235:8001/",
+            "curr_date": self.arg_date,
+            "curr_date_badage": "week"+str(__offset["offset_weeks"]),
+            # 有部分数据没更新，只是提前把接口变量写上了
+            "weekly_report_data": __report_data
+        })
+
+        return __template
+
      
-    # 生成周报    
+    # 生成周报(暂时只有周五周六才生成，没找到更好的办法)
     def create_weekly_report(self,dir_name):
-        # 检查是否要生成周报：每周五/六(且周报不存在)
+        # 检查是否要生成周报：一周的每一天都检查一次，如果没有这个文件就生成
         file_path = os.path.join(self.path["dailyReport"],dir_name,"week"+str(self.config["global"]["work_week"])+"周报.md")
-        if self.arg_date.weekday() >= 4 and not os.path.exists(file_path):
+        if not os.path.exists(file_path) and self.arg_date.weekday() in [4,6]:
             print("正在生成周报",file_path)
             fill_data = self.get_weekly_report_data()
-            self.render_template(fill_data, file_path)
+            Template.render_template(fill_data, file_path)
 
         # 检查是否是新的一周，要迁移common目录【未完成】
         # if self.arg_date.weekday() == 0 and self.config["global"]["work_week"] != self.get_week_offset()["offset_weeks"]:
         #     print("正在迁移common目录",self.path["dailyReport"],self.path["common"],dir_name)
         #     # 迁移common目录
-        #     shutil.move(self.path["common"],os.path.join(self.path["dailyReport"],dir_name))
+        #     shutil.move(self.["common"],os.path.join(self.path["dailyReport"],dir_name))
             
     def create_daily_report(self,dir_name):
         # 检查是否要生成日报
@@ -234,29 +206,7 @@ class DailyReportHandler:
             print("正在生成日报",file_path)
             self.update_config()
             fill_data = self.get_daily_data()
-            self.render_template(fill_data, file_path)
+            Template.render_template(fill_data, file_path)
             
         pass
     
-    """渲染模板
-    @prop:fill_data:填充数据
-    @prop:output_path:文件路径 接收一个或者两个参数
-    返回值:true 成功/失败
-    
-    注意：默认模板文件在Common目录下(base_directory)
-    """
-    def render_template(self, fill_data, *args):
-        output_path = args[0] if len(args) == 1 else os.path.join(args[0],args[1])
-        # 加载模板文件
-        str = Template.header+Template.content+Template.footer
-        env = Environment()
-        try:
-            # 渲染模板
-            rendered_markdown = env.from_string(str).render(fill_data)
-            # 输出渲染后的Markdown
-            with open(output_path, "w", encoding="utf-8") as f:
-                f.write(rendered_markdown)
-            return True
-        except Exception as e:
-            logging.error(e)
-            return False

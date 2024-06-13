@@ -1,56 +1,103 @@
 # 亮点：对周的处理
 from datetime import datetime
 import os
-from tempfile import NamedTemporaryFile
+from tempfile import NamedTemporaryFile # 临时文件
 from jinja2 import Environment, FileSystemLoader
+
+# 本地包
+from utils import Utils,DateHandler
 
 
 class Template:
+    # 首次创建的配置文件
     config_json = {
         "global": {
-            "create_at": "",
-            "last_modify": "",
-            "work_day": -1,
+            "create_at": "",    # 创建日期
+            "last_modify": "",  # 最后修改日期
+            "work_day": -1,     # 
             "work_week": -1,
         },
-        "detail": [
-            {
-                "name": "week1",
-                "desc": "测试",
-                "date": ["04-24"],
-                "detail": [
-                    {
-                        "date": "04-24",
-                        "work_day": 1,
-                        "work_week": 1,
-                        "work_brief": "标题/工作概要，一句话",
-                        "work_list": "工作内容列表，可以是一段话,可以是昨天没干完的事情todo",
-                        "work_todo": "今天没干完的事情",
-                        "work_content": "工作内容",
-                        "work_link": "日报链接,支持自定义",
-                    }
-                ]
-            }
-        ],
+        "detail": [],
     }
+    
+    config_week_detail = {
+        "name": "week1",
+        "desc": "系统创建-首周",
+        "date": [], # 本周的所有天
+        "detail":[] # 本周的每一天的情况[里面有多个detail]
+    }
+    
+    config_day_detail = {
+        "date": "month-day",
+        "work_day": 1,
+        "work_week": 1,
+        "work_brief": "work_brief_default",
+        "work_list": "work_list_default",
+        "work_todo": "work_todo_default",
+        "work_content": "work_content_default",
+        "work_link": "work_link_default",
+    }
+    
+    # 周报模板数据
+    weekly_template_vars={
+        "week": "week_default",
+        "day": "date_default",
+        "type": "type_default",
+        "ip": 1,
+        "curr_date": "curr_date",
+        "curr_date_badage": "curr_date_badage",
+        "work_list": "work_list",
+        "work_detail": "work_detail",
+        "work_summary": "work_summary",
+        
+        "weekly_plan":"default",
+        "weekly_content":"weekly_content",
+        "weekly_summary":"weekly_summary",
+        "weekly_report_data":[{
+            "date":"default",
+            "content":"default",
+            "class":"default",
+            "link":"default"
+        }]
+    }
+    
+    # 日报模板数据
+    daily_template_vars = {
+        "week": "week_default",
+        "day": "date_default",
+        "type": "type_default",
+        "ip": 1,
+        "curr_date": "curr_date",
+        "curr_date_badage": "curr_date_badage",
+        "work_list": "work_list",
+        "work_detail": "work_detail",
+        "work_summary": "work_summary",
+        
+        "work_brief":"work_brief",
+        "work_class":"work_class",
+       " work_link":"work_link"
+    }
+    
     header = """
 <h1 align="center"> CanWay工作日志 </h1>
 <div align="center">
     <img src="https://static.cwoa.net/d7c920db68254e858dc40e9064a8d4b2.png" style="width:250px;" /><br>
     <p align="center">
     <strong>简体中文</strong> | <a href="">English</a>
-</p>
+    </p>
     <a href ="http://10.10.41.235:8000/"><img src="https://img.shields.io/badge/Blog-dancehole-orange?style=flat&logo=microdotblog&logoColor=white&labelColor=blue"></a>
     <a href ="https://gitee.com/dancehole"><img src="https://img.shields.io/badge/Gitee-dancehole-orange?style=flat&logo=gitee&logoColor=red&labelColor=white"></a>
     <a href ="https://github.com/dancehole"><img src="https://img.shields.io/badge/Github-dancehole-orange?style=flat&logo=github&logoColor=white&labelColor=grey"></a>
 </div>
+
 <div align="center">
     <a><img src="https://img.shields.io/badge/入职嘉为-第{{week}}周-yellow"></a>
     <a><img src="https://img.shields.io/badge/工作日报-第{{day}}天-blue"></a>
-    <a><img src="https://img.shields.io/badge/{{curr_date_badage}}-工作{{type}}报-green">
+    <a><img src="https://img.shields.io/badge/{{curr_date_badage}}-工作{{type}}报-green"></a>
 </div>
+
 <p align="center" style="border: 1px solid black; padding: 5px; margin: 10px 0;">
-    <b>{{curr_date}}嘉为实习{{type}}报CanLab</b><br>邓仕昊sx_dancehole@Canway.net<br>欢迎访问日报源网址<a href="{{ip}}">{{ip}}</a>
+    <b>{{curr_date}}嘉为实习{{type}}报CanLab</b><br>邓仕昊#(sx_dancehole@Canway.net)<br>欢迎访问日报源网址<a href="{{ip}}">{{ip}}</a>
     </p>
     """
 
@@ -81,7 +128,7 @@ class Template:
     footer = """
 ## 附录
 
-| 日期  | 工作主要内容 | 所在项目/分类 | 文章输出 |
+| 日期  | 工作主要内容 | 所在项目分类 | 文章输出 |
 | ----- | ---------- | --------- | -------- |
 | 第{{week}}周 | 第{{day}}天   |      |          |
 |  {{curr_date}}     |      {{work_brief}}   |    {{work_class}}|  {{work_link}}|
@@ -92,11 +139,10 @@ class Template:
 
     weekly_footer = """
 ## 附录
-## 工作日志摘要
+### 工作日志摘要
 |日期 | 工作主要内容 | 所在项目/分类 | 工作日报链接 |
 |---|---|---|---|
-{%for date,content,class,link in weekly_report_data%}
-| {{date}} | {{content}} |{{class}} |{{link}} |
+{%for index in weekly_report_data%}| {{index.date}} | {{index.content}} |{{index.class}} |{{index.link}} |
 {%endfor%}
 """
 
@@ -136,7 +182,7 @@ class Template:
 1. (default)总结1
 2. (default)总结2
     """
-    
+
 
     """渲染模板
     @prop:fill_data:填充数据
@@ -148,7 +194,7 @@ class Template:
     @staticmethod
     def render_template(fill_data, *args):
         output_path = args[0] if len(args) == 1 else os.path.join(args[0],args[1])
-        # 加载模板文件
+        # 加载模板文件[自动识别周报或者日报]
         str = Template.header+Template.content+Template.footer if fill_data["type"]=="日" else Template.header+Template.content_weekly+Template.weekly_footer
         env = Environment()
         try:
@@ -161,6 +207,73 @@ class Template:
         except Exception as e:
             # logging.error(e)
             return False
+        
+    """创建缺省的config模板,传入配置文件路径
+    Returns:
+        Dict: 返回配置的字典
+    """
+    @staticmethod
+    def create_default_config(arg_date):
+        config = Template.config_json
+        # 稍微初始化一下子
+        format_date = arg_date.strftime("%m-%d")
+        # global
+        config["global"]["create_at"] = format_date
+        config["global"]["last_modify"] = format_date
+        config["global"]["work_day"] = 1
+        config["global"]["work_week"] = 1
+        # 添加第一周
+        config["detail"].append(Template.config_week_detail)
+        config["detail"][0]["date"].append(format_date)
+        # 第一天
+        config["detail"][0]["detail"].append(Template.config_day_detail)
+        config["detail"][0]["detail"][0]["date"] = format_date
+        
+        return config
+    
+    """创建新的一周config（硬计算，不依赖配置文件）+ 校验是否要生成
+    params:
+        arg_date: datetime
+        config: Dict(既要读取也要修改)
+    """
+    @staticmethod
+    def create_weekly_config(arg_date,config):
+        offset = DateHandler.get_date_offsets(config,arg_date)
+        print(offset)
+        # 检查week是否已经存在
+        if(len(config["detail"])==offset["offset_weeks"]-1):
+            print("本周config已存在，不需要新增")
+        else:
+            print("新增本周config")
+            config["detail"].append(Template.config_week_detail)
+            config["detail"][offset["offset_weeks"]-1]["name"] ="week"+str(offset["offset_weeks"])
+        
+    
+    """根据模板创建某一天的config
+    params:
+        arg_date: datetime
+        config: Dict(既要读取也要修改)
+    """
+    @staticmethod
+    def create_daily_config(arg_date,config):
+        offset = DateHandler.get_date_offsets(config,arg_date)
+        print(offset)
+        __offset_week = offset["offset_weeks"]-1
+        # 检查day是否已经存在
+        for i in config["detail"][__offset_week]["date"] if i==arg_date else None:
+            print("该日期已经存在")
+            return
+        else:
+            print("新增本日config")
+            # 修改global
+            config["global"]["last_modify"] = arg_date
+            __day_template = Template.config_day_template()
+            __day_template["date"] = arg_date
+            __day_template["work_day"] = config["global"]["work_day"]
+            config["detail"][__offset_week]["detail"].append(__day_template)
+            
+            
+        
 
     
 """增加一个测试接口"""
@@ -197,15 +310,15 @@ def test_render_template():
         "weekly_report_data":[
             {
                 "date":"2023-05-01",
-                "content":"default",
-                "class":"default",
-                "link":"default"
+                "content":"defaultcontent",
+                "class":"defaultclass",
+                "link":"defaultlink"
             },
             {
                 "date":"2023-05-02",
-                "content":"default",
-                "class":"default",
-                "link":"default"
+                "content":"defaultcontent",
+                "class":"defaultclass",
+                "link":"defaultlink"
             }
         ]
     }
