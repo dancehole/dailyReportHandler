@@ -6,8 +6,8 @@ from jinja2 import Environment, FileSystemLoader
 from requests import head
 
 # 导入本地包
-from . import DateHandler, Utils
-from . import Template
+from .Utils import DateHandler, Utils
+from .Template import Template
 
 # 日报类，主要处理日报+周报处理【逻辑核心】
 class DailyReportHandler:
@@ -19,7 +19,6 @@ class DailyReportHandler:
         # 读取config文件(同时处理日期)+更新
         self.config = self.parse_config()
         self.config = Template.update_daily_config(self.arg_date,self.config)
-        print(self.config)
         # 这个offsets可以复用，项目为：offset_days offset_weeks curr_monday first_monday
         self.offset = DateHandler.get_date_offsets(self.config,self.arg_date)
         # 获取daily下对于目录

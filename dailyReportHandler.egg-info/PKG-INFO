@@ -1,6 +1,6 @@
 Metadata-Version: 2.1
 Name: dailyReportHandler
-Version: 1.0.0
+Version: 1.0.1
 Summary: A file manager to generate daily report
 Home-page: https://github.com/dancehole/dailyReportHandler
 Author: Dancehole
@@ -17,5 +17,5 @@ Description-Content-Type: text/markdown
 
 readme待补充。。。
 
-
+安装
 

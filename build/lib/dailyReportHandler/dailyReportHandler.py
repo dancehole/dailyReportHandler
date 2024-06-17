@@ -6,8 +6,8 @@ from jinja2 import Environment, FileSystemLoader
 from requests import head
 
 # 导入本地包
-from utils import DateHandler, Utils
-from template import Template
+from . import DateHandler, Utils
+from . import Template
 
 # 日报类，主要处理日报+周报处理【逻辑核心】
 class DailyReportHandler:

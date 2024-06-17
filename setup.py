@@ -4,17 +4,20 @@ from setuptools import setup, find_packages
 # 1. 打包：python setup.py sdist bdist_wheel
 # 2. 上传：twine upload dist/*
 # 本地安装：pip install ./dailyReportHandler-1.0.0.whl
+# 或者以开发模式安装：pip install -e .  （在包目录下,会安装到python的site-packages目录）
 # 或者tar.gz
 # 安装完成后就可以随地大小便了
+
 
 # 0.1.0 更新：完成安装包流程
 # 0.1.1 更新：测试命令行调用
 # 0.1.2 更新：可以正确解析命令行参数+过整体流程
 # 1.0   更新：完善所有功能，可以正常生成日报周报，处理模板等（开箱即用）
+# 1.0.1 更新：修改导入包失败的bug
 
 setup(
     name='dailyReportHandler',  # 包名
-    version='1.0.0',    # 版本号
+    version='1.0.1',    # 版本号
     packages=find_packages(),  # 自动发现所有包
     install_requires=['requests'],  # 依赖列表
     author='Dancehole',  # 作者名

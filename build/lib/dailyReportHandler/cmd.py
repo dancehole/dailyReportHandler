@@ -1,8 +1,10 @@
 import argparse
 from datetime import datetime
 import os
-from dailyReportHandler import DailyReportHandler
-from utils import Utils,DateHandler
+
+# 本地包
+from . import DailyReportHandler
+from . import Utils,DateHandler
 
 
 # PS:处理日期真的是个很难的时期ww特别是进位等等
