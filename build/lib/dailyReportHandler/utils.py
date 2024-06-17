@@ -1,3 +1,10 @@
+
+import calendar
+from datetime import datetime, timedelta
+import json
+import os
+from typing import Any, Dict, Optional
+
 """
 工具类，含文件读写等操作
 """
@@ -55,7 +62,6 @@ class Utils:
 
 """
 处理日期类,用于检测日期合法性，生成格式化日期
-应当是一个静态类
 """
 class DateHandler:
     def __init__(self):
@@ -86,7 +92,6 @@ class DateHandler:
     """
     获取某天是星期几,返回列表[7, 'Sunday', '星期日']
     """
-
     @staticmethod
     def get_offset_of_week(date_string):
         # 解析日期字符串
@@ -108,3 +113,51 @@ class DateHandler:
             [7, "Sunday", "星期日"],
         ]
         return WEEKDAY_NAMES[weekday_int]
+
+
+    """获取周一日期
+    Args:
+        date (datetime): 某天日期
+    Returns:
+        datetime: 周一的日期
+    """
+    @staticmethod
+    def get_monday(date):
+        days_to_monday = (date.weekday()) % 7
+        return date - timedelta(days=days_to_monday)
+
+    """计算入职周数（以入职当周周一为第一天，这样方便后续计算周）
+    Returns:
+        Dict: {
+            "offset_days":offset_days,
+            "offset_weeks":offset_weeks,
+            "curr_monday":curr_monday.strftime("%m-%d"),
+            "first_monday":first_monday
+            }
+    """
+    @staticmethod
+    def get_date_offsets(config,arg_date):
+        # 处理第一天+所在周的计算[可以计算入职天数&整周数]
+        __first_day = config["global"]["create_at"]
+        # mm-dd转datetime
+        curr_year = datetime.now().year
+        first_date = datetime.strptime(f'{curr_year}-{__first_day}', '%Y-%m-%d')
+        first_date_offset = first_date.weekday()+1
+        
+        first_monday = DateHandler.get_monday(first_date)
+        curr_monday  = DateHandler.get_monday(arg_date)
+        
+        print("入职日期",first_date.strftime("%Y-%m-%d"),"那时是星期",first_date_offset,"入职当周开始时间",first_monday)
+        print("今天日期",arg_date.strftime("%Y-%m-%d"),"现在是星期",arg_date.weekday()+1,"本周的开始时间是",curr_monday)
+        
+        offset_days  = (arg_date - first_date).days+1   # 入职天数 = 最后修改时间 - conifg创建时间
+        offset_weeks = ((arg_date - first_monday).days) // 7 +1     # 入职周数(不计算整周 方便日报) = 
+        
+        print("累计入职",offset_days,"天，今天是入职第",offset_weeks,"周")
+
+        return {
+            "offset_days":offset_days,      # 入职的天数
+            "offset_weeks":offset_weeks,    # 入职的周数（不是整周）
+            "curr_monday":curr_monday.strftime("%m-%d"),    # 入职当周周一
+            "first_monday":first_monday.strftime("%m-%d")     # 当前周周一
+        }

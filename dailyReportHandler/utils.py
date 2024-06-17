@@ -147,23 +147,17 @@ class DateHandler:
         first_monday = DateHandler.get_monday(first_date)
         curr_monday  = DateHandler.get_monday(arg_date)
         
-        print("入职日期",first_date)
-        print("入职是星期",first_date_offset)
-        print("入职当周开始时间是",first_monday)
-
+        print("入职日期",first_date.strftime("%Y-%m-%d"),"那时是星期",first_date_offset,"入职当周开始时间",first_monday)
+        print("今天日期",arg_date.strftime("%Y-%m-%d"),"现在是星期",arg_date.weekday()+1,"本周的开始时间是",curr_monday)
         
-        print("现在是",arg_date.strftime("%m-%d"))
-        print("现在是星期",arg_date.weekday()+1)
-        print("这周开始时间是",curr_monday)
+        offset_days  = (arg_date - first_date).days+1   # 入职天数 = 最后修改时间 - conifg创建时间
+        offset_weeks = ((arg_date - first_monday).days) // 7 +1     # 入职周数(不计算整周 方便日报) = 
         
-        offset_days  = (arg_date - first_date).days+1
-        offset_weeks = offset_days // 7 +1
-        
-        print("入职",offset_days,"天，入职第",offset_weeks,"周")
+        print("累计入职",offset_days,"天，今天是入职第",offset_weeks,"周")
 
         return {
-            "offset_days":offset_days,
-            "offset_weeks":offset_weeks,
-            "curr_monday":curr_monday.strftime("%m-%d"),
-            "first_monday":first_monday
+            "offset_days":offset_days,      # 入职的天数
+            "offset_weeks":offset_weeks,    # 入职的周数（不是整周）
+            "curr_monday":curr_monday.strftime("%m-%d"),    # 入职当周周一
+            "first_monday":first_monday.strftime("%m-%d")     # 当前周周一
         }

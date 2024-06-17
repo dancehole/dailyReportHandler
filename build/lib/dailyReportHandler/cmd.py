@@ -1,15 +1,8 @@
-import calendar
-import os
-from datetime import datetime, timedelta
-import logging
-import re
-import sys
 import argparse
+from datetime import datetime
 import os
-from typing import Any, Dict, Optional  # 类型注解
-from jinja2 import Environment, FileSystemLoader
-import json
-from requests import head
+from dailyReportHandler import DailyReportHandler
+from utils import Utils,DateHandler
 
 
 # PS:处理日期真的是个很难的时期ww特别是进位等等
@@ -38,25 +31,13 @@ from requests import head
 |--docsOutput文档输出
 """
 
-
-"""
-合法性检查类，用于提高安全
-"""
-class Validator:
-    def __init__(self):
-        pass
-
 def main():
-    # 用户输入
-    # user_input = input("请输入一些数据: ")
-
-    # todo：打包成轮子 直接命令行调用daily run xxx 而不是 python dailt.py run xxx...
     # 创建解析器和添加参数
     """
-    接收参数/实现功能：
-    (缺省)只建立文件夹+不打log python daily.py
+    调用方法：daily -d 04-24 -m 入职第一天 ...
     """
     parser = argparse.ArgumentParser(description="Process command line arguments")
+    # 位置参数1：运行模式，只有build会修改目录，
     parser.add_argument(
         "action",
         choices=["start", "dev", "build"],
@@ -98,9 +79,9 @@ def main():
         print("日期参数不合法！请重新输入")
         return
 
-    # test()
     # 工作流处理对象
     # handler = WorkFlowHandler(args)
+    print(args)
     handler = DailyReportHandler(args)
 
     # 输出结果

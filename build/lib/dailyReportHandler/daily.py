@@ -39,25 +39,12 @@ from requests import head
 """
 
 
-
-
-
-
-
-
 """
 合法性检查类，用于提高安全
 """
-
-
 class Validator:
     def __init__(self):
         pass
-
-
-
-
-
 
 def main():
     # 用户输入

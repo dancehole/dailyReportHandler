@@ -5,7 +5,7 @@ from tempfile import NamedTemporaryFile # 临时文件
 from jinja2 import Environment, FileSystemLoader
 
 # 本地包
-from utils import Utils,DateHandler
+from . import Utils,DateHandler
 
 
 class Template:
@@ -92,7 +92,7 @@ class Template:
 
 <div align="center">
     <a><img src="https://img.shields.io/badge/入职嘉为-第{{week}}周-yellow"></a>
-    <a><img src="https://img.shields.io/badge/工作日报-第{{day}}天-blue"></a>
+    <a><img src="https://img.shields.io/badge/累计工作-第{{day}}天-blue"></a>
     <a><img src="https://img.shields.io/badge/{{curr_date_badage}}-工作{{type}}报-green"></a>
 </div>
 
@@ -239,39 +239,55 @@ class Template:
     @staticmethod
     def create_weekly_config(arg_date,config):
         offset = DateHandler.get_date_offsets(config,arg_date)
-        print(offset)
+
         # 检查week是否已经存在
-        if(len(config["detail"])==offset["offset_weeks"]-1):
+        if(len(config["detail"])==offset["offset_weeks"]):
             print("本周config已存在，不需要新增")
         else:
             print("新增本周config")
             config["detail"].append(Template.config_week_detail)
             config["detail"][offset["offset_weeks"]-1]["name"] ="week"+str(offset["offset_weeks"])
+        return config
         
     
-    """根据模板创建某一天的config
+    """更新某一天的config
+    statement:
+        1. 检查是否需要新增周config
+        2. 检查是否需要新增dayconfig
     params:
         arg_date: datetime
         config: Dict(既要读取也要修改)
     """
     @staticmethod
-    def create_daily_config(arg_date,config):
+    def update_daily_config(arg_date,config):
         offset = DateHandler.get_date_offsets(config,arg_date)
-        print(offset)
+        date_formate = arg_date.strftime("%m-%d")
         __offset_week = offset["offset_weeks"]-1
+        
+
+        
+        # 判断是否需要建立新的一周
+        if len(config["detail"]) < offset["offset_weeks"]:
+            config = Template.create_weekly_config(arg_date,config)
+            
         # 检查day是否已经存在
-        for i in config["detail"][__offset_week]["date"] if i==arg_date else None:
-            print("该日期已经存在")
-            return
+        for i in config["detail"][__offset_week]["date"]:
+            if i==date_formate:
+                print("config的该日期已经存在")
+                return config
         else:
             print("新增本日config")
             # 修改global
-            config["global"]["last_modify"] = arg_date
-            __day_template = Template.config_day_template()
-            __day_template["date"] = arg_date
-            __day_template["work_day"] = config["global"]["work_day"]
+            config["global"]["last_modify"] = date_formate
+            config["global"]["work_day"] += 1
+            # 修改detail
+            __day_template = Template.config_day_detail
+            __day_template["date"] = date_formate
+            __day_template["work_day"] = offset["offset_days"]
+            # 修改week_config
+            config["detail"][__offset_week]["date"].append(date_formate)
             config["detail"][__offset_week]["detail"].append(__day_template)
-            
+        return config
             
         
 
