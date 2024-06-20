@@ -94,6 +94,9 @@ daily init # 创建今天的日报&目录&初始化
 
 如果你想为此项目做出贡献，请按照以下步骤：
 
+- [python包开发流程](./static/develop.md)
+- [代码贡献流程](./static/contribute.md)
+
 1. Fork 此仓库。
 2. 创建你的功能分支 (`git checkout -b feature/AmazingFeature`)。
 3. 提交你的更改 (`git commit -m 'Add some AmazingFeature'`)。
@@ -121,3 +124,8 @@ daily init # 创建今天的日报&目录&初始化
 
 
 这段文档解释了如何使用 `DailyReportHandler` 来初始化日志目录、生成日报和周报，并更新配置文件。
+
+
+## 问题反馈：
+1. config记录周数不正常
+2. 渲染模板周数不正常

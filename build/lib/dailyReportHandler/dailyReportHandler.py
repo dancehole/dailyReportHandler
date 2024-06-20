@@ -150,11 +150,11 @@ class DailyReportHandler:
             "curr_date": self.arg_date.strftime("%Y-%m-%d"),
         }
         filled_data["day"] = self.config["global"]["work_day"]
-        filled_data["week"] = self.config["global"]["work_week"]
+        filled_data["week"] = self.offset["work_week"]    # 周改为绝对日期
         filled_data["curr_date_badage"] = self.arg_date.strftime("%m--%d")
         return filled_data
 
-        
+
     # 填充周报的模板数据，模板参考readme:weekly_test_data{date,content,class,ip}
     def get_weekly_report_data(self):
         __template = Template.weekly_template_vars
