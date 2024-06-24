@@ -14,6 +14,7 @@ from setuptools import setup, find_packages
 # 0.1.2 更新：可以正确解析命令行参数+过整体流程
 # 1.0   更新：完善所有功能，可以正常生成日报周报，处理模板等（开箱即用）
 # 1.0.1 更新：修改导入包失败的bug
+# 1.0.2 bugfix: 修复“周”模板渲染不正确的问题
 
 setup(
     name='dailyReportHandler',  # 包名
