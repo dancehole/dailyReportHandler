@@ -5,7 +5,7 @@ from tempfile import NamedTemporaryFile # 临时文件
 from jinja2 import Environment, FileSystemLoader
 
 # 本地包
-from . import Utils,DateHandler
+from .Utils import Utils,DateHandler
 
 
 class Template:

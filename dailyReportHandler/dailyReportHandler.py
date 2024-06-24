@@ -149,7 +149,7 @@ class DailyReportHandler:
             "curr_date": self.arg_date.strftime("%Y-%m-%d"),
         }
         filled_data["day"] = self.config["global"]["work_day"]
-        filled_data["week"] = self.config["global"]["work_week"]
+        filled_data["week"] = self.offset["offset_weeks"]
         filled_data["curr_date_badage"] = self.arg_date.strftime("%m--%d")
         return filled_data
 

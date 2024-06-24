@@ -18,7 +18,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='dailyReportHandler',  # 包名
-    version='1.0.1',    # 版本号
+    version='1.0.2',    # 版本号
     packages=find_packages(),  # 自动发现所有包
     install_requires=['requests'],  # 依赖列表
     author='Dancehole',  # 作者名
